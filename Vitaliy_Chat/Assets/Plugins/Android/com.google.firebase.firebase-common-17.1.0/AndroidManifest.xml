@@ -1,0 +1,9 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.google.firebase" android:versionName="17.1.0">
+  <uses-sdk android:minSdkVersion="14" android:targetSdkVersion="28" />
+  <!-- Although the *SdkVersion is captured in gradle build files, this is required for non gradle builds -->
+  <!-- <uses-sdk android:minSdkVersion="14"/> -->
+  <application>
+    <provider android:name="com.google.firebase.provider.FirebaseInitProvider" android:authorities="com.vitaly.unitychat.firebaseinitprovider" android:exported="false" android:initOrder="100" />
+  </application>
+</manifest>

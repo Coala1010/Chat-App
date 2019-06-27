@@ -1,0 +1,11 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources tools:keep="@string/firebase_database_url,@string/gcm_defaultSenderId,@string/google_storage_bucket,@string/project_id,@string/google_api_key,@string/google_crash_reporting_api_key,@string/google_app_id,@string/default_web_client_id" xmlns:tools="http://schemas.android.com/tools">
+  <string name="firebase_database_url" translatable="false">https://vitaliy-chat.firebaseio.com</string>
+  <string name="gcm_defaultSenderId" translatable="false">401967446065</string>
+  <string name="google_storage_bucket" translatable="false">vitaliy-chat.appspot.com</string>
+  <string name="project_id" translatable="false">vitaliy-chat</string>
+  <string name="google_api_key" translatable="false">AIzaSyCF8kE9Ez4V4qliMC_pqLMrzm-dbf4ABwE</string>
+  <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCF8kE9Ez4V4qliMC_pqLMrzm-dbf4ABwE</string>
+  <string name="google_app_id" translatable="false">1:401967446065:android:2642e3ad9be1ad2b</string>
+  <string name="default_web_client_id" translatable="false">401967446065-dg15nc3askv2tpiok2f7868cog85k6at.apps.googleusercontent.com</string>
+</resources>

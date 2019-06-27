@@ -1,0 +1,37 @@
+{
+  "client": [
+    {
+      "services": {
+        "appinvite_service": {
+          "status": 1
+        }, 
+        "analytics_service": {
+          "status": 0
+        }
+      }, 
+      "oauth_client": [
+        {
+          "client_id": "401967446065-471ru7q2qsjl204jeqeg8m91fcelvfm6.apps.googleusercontent.com"
+        }
+      ], 
+      "api_key": [
+        {
+          "current_key": "AIzaSyC1ebIy0VsJCqUbSu1knDj2Yaa2cNXqfUI"
+        }
+      ], 
+      "client_info": {
+        "mobilesdk_app_id": "1:401967446065:ios:2642e3ad9be1ad2b", 
+        "android_client_info": {
+          "package_name": "com.vitaly.unitychat"
+        }
+      }
+    }
+  ], 
+  "configuration_version": "1", 
+  "project_info": {
+    "storage_bucket": "vitaliy-chat.appspot.com", 
+    "project_id": "vitaliy-chat", 
+    "firebase_url": "https://vitaliy-chat.firebaseio.com", 
+    "project_number": "401967446065"
+  }
+}
