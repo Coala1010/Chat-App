@@ -15,9 +15,7 @@ public class RoomPanelManager : MonoBehaviour {
     GameObject roomPanel;
     GameObject chatPanel;
     GameObject usernameObj;
-    GameObject usertypeObj;
     public GameObject createroomBtn;
-    public GameObject usertypeBtn;
     public GameObject signoutBtn;
 
     bool bUserDataRefreshed = false;
@@ -29,7 +27,6 @@ public class RoomPanelManager : MonoBehaviour {
         roomPanel = transform.parent.Find("RoomPanel").gameObject;
         chatPanel = transform.parent.Find("ChatPanel").gameObject;
         usernameObj = transform.Find("UserNameLabel").gameObject;
-        usertypeObj = transform.Find("UserTypeLabel").gameObject;
     }
 	
 	// Update is called once per frame
@@ -48,19 +45,8 @@ public class RoomPanelManager : MonoBehaviour {
         if(bUserDataRefreshed)
         {
             bUserDataRefreshed = false;
-            createroomBtn.GetComponent<BoxCollider>().enabled = AppManager.Instance.bUserType;
-            usertypeBtn.GetComponent<BoxCollider>().enabled = true;
+            createroomBtn.GetComponent<BoxCollider>().enabled = true;
             signoutBtn.GetComponent<BoxCollider>().enabled = true;
-            if (AppManager.Instance.bUserType)
-            {
-                usertypeObj.GetComponent<UILabel>().text = "User Type : Collaborator";
-                usertypeBtn.transform.GetChild(0).gameObject.GetComponent<UILabel>().text = "Set as Viewer";
-            }
-            else
-            {
-                usertypeObj.GetComponent<UILabel>().text = "User Type : Viewer";
-                usertypeBtn.transform.GetChild(0).gameObject.GetComponent<UILabel>().text = "Set as Collaborator";
-            }
             usernameObj.GetComponent<UILabel>().text = "User Name : " + AppManager.Instance.user.DisplayName;
         }
     }
@@ -69,7 +55,6 @@ public class RoomPanelManager : MonoBehaviour {
     {
         roomList.Clear();
         createroomBtn.GetComponent<BoxCollider>().enabled = false;
-        usertypeBtn.GetComponent<BoxCollider>().enabled = false;
         signoutBtn.GetComponent<BoxCollider>().enabled = false;
         FirebaseDatabase.DefaultInstance.RootReference.Child("Messages").ChildAdded += HandleChildAdded;
 
@@ -81,13 +66,14 @@ public class RoomPanelManager : MonoBehaviour {
             }
             else if(task.IsCompleted)
             {
-                DataSnapshot snapshot1 = task.Result;
-                foreach (DataSnapshot aaaChat in snapshot1.Children)
+                DataSnapshot snapshot = task.Result;
+                foreach (DataSnapshot aaaChat in snapshot.Children)
                 {
                     if (AppManager.Instance.user.UserId.Equals(aaaChat.Key))
                     {
                         bUserDataRefreshed = true;
-                        AppManager.Instance.bUserType = ((string)aaaChat.Value).Equals("1");
+                        foreach (DataSnapshot bbbChat in aaaChat.Children)
+                            AppManager.Instance.bUserType[bbbChat.Key] = ((string)bbbChat.Value).Equals("1");
                         break;
                     }
                 }
@@ -109,7 +95,6 @@ public class RoomPanelManager : MonoBehaviour {
             Debug.LogError(args.DatabaseError.Message);
             return;
         }
-        //Debug.Log(args.Snapshot);
         roomList.Add(args.Snapshot.Key);
     }
 
@@ -145,29 +130,5 @@ public class RoomPanelManager : MonoBehaviour {
         loginPanel.SetActive(false);
         roomPanel.SetActive(false);
         chatPanel.SetActive(true);
-    }
-
-    public void OnUserTypeBtnClicked()
-    {
-        string userId = AppManager.Instance.user.UserId;
-        if(AppManager.Instance.bUserType)
-            FirebaseDatabase.DefaultInstance.RootReference.Child("Users").Child(userId).SetValueAsync("0");
-        else
-            FirebaseDatabase.DefaultInstance.RootReference.Child("Users").Child(userId).SetValueAsync("1");
-
-        AppManager.Instance.bUserType = !AppManager.Instance.bUserType;
-        string userName = AppManager.Instance.user.DisplayName;
-        string nowTimeStr = System.DateTime.UtcNow.ToString("MM-dd HH:mm");
-
-        for (int i=0; i<roomListObj.transform.childCount; i++)
-        {
-            string roomId = roomListObj.transform.GetChild(i).gameObject.name;
-            DatabaseReference newSystemChatRef = FirebaseDatabase.DefaultInstance.RootReference.Child("Messages").Child(roomId).Push();
-            string val = AppManager.Instance.bUserType ? "collaborator" : "viewer";
-            newSystemChatRef.Child(userName).SetValueAsync(val);
-            newSystemChatRef.Child("SYSTEM").SetValueAsync("TRUE");
-            newSystemChatRef.Child("SendTime").SetValueAsync(nowTimeStr);
-        }
-        bUserDataRefreshed = true;
     }
 }

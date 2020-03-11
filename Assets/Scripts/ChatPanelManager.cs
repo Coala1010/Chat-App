@@ -65,12 +65,11 @@ public class ChatPanelManager : MonoBehaviour {
 
         string userName = AppManager.Instance.user.DisplayName;
         string currentRoomNo = AppManager.Instance.currentRoomNo;
-        string nowTimeStr = System.DateTime.UtcNow.ToString("MM-dd HH:mm");
 
         DatabaseReference newSystemChatRef = FirebaseDatabase.DefaultInstance.RootReference.Child("Messages").Child(currentRoomNo).Push();
         newSystemChatRef.Child(userName).SetValueAsync("out");
         newSystemChatRef.Child("SYSTEM").SetValueAsync("TRUE");
-        newSystemChatRef.Child("SendTime").SetValueAsync(nowTimeStr);
+        newSystemChatRef.Child("SendTime").SetValueAsync(ServerValue.Timestamp);
     }
 
     private void OnEnable()
@@ -82,10 +81,8 @@ public class ChatPanelManager : MonoBehaviour {
         ClearChatList();
         string userName = AppManager.Instance.user.DisplayName;
         string currentRoomNo = AppManager.Instance.currentRoomNo;
-        string nowTimeStr = System.DateTime.UtcNow.ToString("MM-dd HH:mm");
 
         mInput.value = "";
-        mInput.gameObject.GetComponent<BoxCollider>().enabled = AppManager.Instance.bUserType;
 
         FirebaseDatabase.DefaultInstance.GetReference("Messages").Child(currentRoomNo).ChildAdded += HandleMessageAdded;
         FirebaseDatabase.DefaultInstance.GetReference("Messages").Child(currentRoomNo).ChildChanged += HandleMessageChanged;
@@ -93,7 +90,9 @@ public class ChatPanelManager : MonoBehaviour {
         DatabaseReference newSystemChatRef = FirebaseDatabase.DefaultInstance.RootReference.Child("Messages").Child(currentRoomNo).Push();
         newSystemChatRef.Child(userName).SetValueAsync("in");
         newSystemChatRef.Child("SYSTEM").SetValueAsync("TRUE");
-        newSystemChatRef.Child("SendTime").SetValueAsync(nowTimeStr);
+        newSystemChatRef.Child("SendTime").SetValueAsync(ServerValue.Timestamp);
+
+        RefreshBG_Info();
     }
 
     void HandleMessageAdded(object sender, ChildChangedEventArgs args)
@@ -115,13 +114,13 @@ public class ChatPanelManager : MonoBehaviour {
         {
             //Debug.Log(aaaChat);
             if (aaaChat.Key.Equals("SendTime"))
-                newChatInfo.chatSendTime = (string)aaaChat.Value;
+                newChatInfo.chatSendTime = aaaChat.Value.ToString();
             else if(aaaChat.Key.Equals("Edited"))
                 newChatInfo.chatEdited = (string)aaaChat.Value;
             else if (aaaChat.Key.Equals("Editing"))
                 newChatInfo.chatEditing = (string)aaaChat.Value;
             else if (aaaChat.Key.Equals("EditTime"))
-                newChatInfo.chatEditTime = (string)aaaChat.Value;
+                newChatInfo.chatEditTime = aaaChat.Value.ToString();
             else if (aaaChat.Key.Equals("SYSTEM"))
                 newChatInfo.isSystemMessage = true;
             else if (!aaaChat.Key.Equals("EditHistory"))
@@ -154,13 +153,13 @@ public class ChatPanelManager : MonoBehaviour {
         {
             //Debug.Log(bbbChat);
             if (bbbChat.Key.Equals("SendTime"))
-                newChatInfo.chatSendTime = (string)bbbChat.Value;
+                newChatInfo.chatSendTime = bbbChat.Value.ToString();
             else if (bbbChat.Key.Equals("Edited"))
                 newChatInfo.chatEdited = (string)bbbChat.Value;
             else if (bbbChat.Key.Equals("Editing"))
                 newChatInfo.chatEditing = (string)bbbChat.Value;
             else if (bbbChat.Key.Equals("EditTime"))
-                newChatInfo.chatEditTime = (string)bbbChat.Value;
+                newChatInfo.chatEditTime = bbbChat.Value.ToString();
             else if (bbbChat.Key.Equals("SYSTEM"))
                 newChatInfo.isSystemMessage = true;
             else if (!bbbChat.Key.Equals("EditHistory"))
@@ -229,6 +228,7 @@ public class ChatPanelManager : MonoBehaviour {
             tempItemObj.transform.Find("Pencil").gameObject.SetActive(false);
             tempItemObj.transform.Find("Text").gameObject.GetComponent<UILabel>().color = new Color(0.5f, 0.5f, 0.5f);
 
+            sendTime = AppManager.Instance.GetDateTimeFromTimeStamp(sendTime);
             tempItemObj.transform.Find("Sendtime").gameObject.GetComponent<UILabel>().text = sendTime;
             if (text.Equals("in"))
                 tempItemObj.transform.Find("Text").gameObject.GetComponent<UILabel>().text = username + " joined this room";
@@ -246,7 +246,10 @@ public class ChatPanelManager : MonoBehaviour {
             tempItemObj.transform.Find("Text").gameObject.GetComponent<UILabel>().color = new Color(0.12f, 0.7f, 0.5f);
 
             tempItemObj.transform.Find("Name").gameObject.GetComponent<UILabel>().text = username + ":";
+
+            sendTime = AppManager.Instance.GetDateTimeFromTimeStamp(sendTime);
             tempItemObj.transform.Find("Sendtime").gameObject.GetComponent<UILabel>().text = sendTime;
+
             tempItemObj.transform.Find("Text").gameObject.GetComponent<UILabel>().text = text;
             if (editingStr != null)
             {
@@ -258,12 +261,12 @@ public class ChatPanelManager : MonoBehaviour {
                 tempItemObj.transform.Find("Edit").gameObject.SetActive(true);
                 if (editedStr.Equals(AppManager.Instance.user.DisplayName))
                     editedStr = "YOU";
+                editTime = AppManager.Instance.GetDateTimeFromTimeStamp(editTime);
                 tempItemObj.transform.Find("Edit").gameObject.GetComponent<UILabel>().text = editedStr + " edited (" + editTime + ")";
             }
             else
                 tempItemObj.transform.Find("Edit").gameObject.SetActive(false);
             tempItemObj.name = chatkey;
-            tempItemObj.transform.Find("Pencil").gameObject.SetActive(AppManager.Instance.bUserType);
         }
     }
 
@@ -284,13 +287,15 @@ public class ChatPanelManager : MonoBehaviour {
         // It's a good idea to strip out all symbols as we don't want user input to alter colors, add new lines, etc
         string text = NGUIText.StripSymbols(mInput.value);
 
+        if (!AppManager.Instance.GetUserType(currentRoomNo))
+            return;
+
         if (!string.IsNullOrEmpty(text))
         {
             mInput.value = "";
             // mInput.isSelected = false;
 
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
-            string nowTimeStr = System.DateTime.UtcNow.ToString("MM-dd HH:mm");
 
             if (editChatKey != null)
             {
@@ -300,11 +305,11 @@ public class ChatPanelManager : MonoBehaviour {
                     DatabaseReference existChatRef = reference.Child("Messages").Child(currentRoomNo).Child(editChatKey);
                     existChatRef.Child(editChatUser).SetValueAsync(text);
                     existChatRef.Child("Edited").SetValueAsync(AppManager.Instance.user.DisplayName);
-                    existChatRef.Child("EditTime").SetValueAsync(nowTimeStr);
+                    existChatRef.Child("EditTime").SetValueAsync(ServerValue.Timestamp);
 
                     DatabaseReference chatHistoryRef = existChatRef.Child("EditHistory").Push();
                     chatHistoryRef.Child(userName).SetValueAsync(text);
-                    chatHistoryRef.Child("EditTime").SetValueAsync(nowTimeStr);
+                    chatHistoryRef.Child("EditTime").SetValueAsync(ServerValue.Timestamp);
                 }
 
                 editChatTextBefore = null;
@@ -315,7 +320,7 @@ public class ChatPanelManager : MonoBehaviour {
             {
                 DatabaseReference newChatRef = reference.Child("Messages").Child(currentRoomNo).Push();
                 newChatRef.Child(userName).SetValueAsync(text);
-                newChatRef.Child("SendTime").SetValueAsync(nowTimeStr);
+                newChatRef.Child("SendTime").SetValueAsync(ServerValue.Timestamp);
             }
 
         }
@@ -359,5 +364,45 @@ public class ChatPanelManager : MonoBehaviour {
             DatabaseReference reference = FirebaseDatabase.DefaultInstance.RootReference;
             reference.Child("Messages").Child(currentRoomNo).Child(editChatKey).Child("Editing").RemoveValueAsync();
         }
+    }
+    
+    public void OnUserTypeBtnClicked()
+    {
+        string userId = AppManager.Instance.user.UserId;
+        string userName = AppManager.Instance.user.DisplayName;
+        string currentRoomNo = AppManager.Instance.currentRoomNo;
+
+        bool bUserType = AppManager.Instance.GetUserType(currentRoomNo);
+
+        DatabaseReference newSystemChatRef = FirebaseDatabase.DefaultInstance.RootReference.Child("Messages").Child(currentRoomNo).Push();
+        string val = bUserType ? "collaborator" : "viewer";
+        newSystemChatRef.Child(userName).SetValueAsync(val);
+        newSystemChatRef.Child("SYSTEM").SetValueAsync("TRUE");
+        newSystemChatRef.Child("SendTime").SetValueAsync(ServerValue.Timestamp);
+
+        if (bUserType)
+            FirebaseDatabase.DefaultInstance.RootReference.Child("Users").Child(userId).Child(currentRoomNo).SetValueAsync("0");
+        else
+            FirebaseDatabase.DefaultInstance.RootReference.Child("Users").Child(userId).Child(currentRoomNo).SetValueAsync("1");
+        AppManager.Instance.bUserType[currentRoomNo] = !bUserType;
+        RefreshBG_Info();
+    }
+
+    private void RefreshBG_Info()
+    {
+        string currentRoomNo = AppManager.Instance.currentRoomNo;
+        transform.Find("BG_Info/RoomNum").gameObject.GetComponent<UILabel>().text = currentRoomNo;
+        bool bUserType = AppManager.Instance.GetUserType(currentRoomNo);
+        if(bUserType)
+        {
+            transform.Find("UserTypeBtn").gameObject.transform.GetChild(0).gameObject.GetComponent<UILabel>().text = "To Viewer";
+            transform.Find("BG_Info/UserType").gameObject.GetComponent<UILabel>().text = "You are a Collaborator now";
+        }
+        else
+        {
+            transform.Find("UserTypeBtn").gameObject.transform.GetChild(0).gameObject.GetComponent<UILabel>().text = "To Collaborator";
+            transform.Find("BG_Info/UserType").gameObject.GetComponent<UILabel>().text = "You are a Viewer now";
+        }
+        mInput.gameObject.GetComponent<BoxCollider>().enabled = bUserType;
     }
 }

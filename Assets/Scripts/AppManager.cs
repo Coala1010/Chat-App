@@ -4,6 +4,7 @@ using UnityEngine;
 using Firebase;
 using Firebase.Unity.Editor;
 using Firebase.Database;
+using System;
 
 public class AppManager : MonoBehaviour {
 
@@ -19,7 +20,7 @@ public class AppManager : MonoBehaviour {
     public Firebase.Auth.FirebaseAuth auth;
     public Firebase.Auth.FirebaseUser user;
 
-    public bool bUserType = true; // 0: Viewer, 1: Collaborator
+    public Dictionary<string,bool> bUserType; // 0: Viewer, 1: Collaborator
 
     public string currentRoomNo;
     int sceneFlag = 0;
@@ -32,6 +33,7 @@ public class AppManager : MonoBehaviour {
     // Use this for initialization
     void Start () {
         Instance = this;
+        bUserType = new Dictionary<string, bool>();
 
         FirebaseApp.DefaultInstance.SetEditorDatabaseUrl("https://vitaliy-chat.firebaseio.com/");
         
@@ -59,6 +61,22 @@ public class AppManager : MonoBehaviour {
                 // Firebase Unity SDK is not safe to use here.
             }
         });
+    }
+
+    public bool GetUserType(string roomId)
+    {
+        if(bUserType.ContainsKey(roomId))
+            return bUserType[roomId];
+        return true;
+    }
+
+    public string GetDateTimeFromTimeStamp(string timestamp)
+    {
+        if (string.IsNullOrEmpty(timestamp))
+            return string.Empty;
+        DateTime dateTime = new DateTime(1970, 1, 1, 0, 0, 0, 0);
+        dateTime = dateTime.AddSeconds((double)(long.Parse(timestamp) / 1000));
+        return dateTime.ToString("MM-dd HH:mm");
     }
 
     public void OnSignOutBtnClicked()
